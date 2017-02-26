@@ -586,7 +586,7 @@ void GraphicsAPI::processTriangle(ShaderIO& p1, ShaderIO& p2, ShaderIO& p3)
 	p3.data[0] /= p3.data[0].w;
 
 	ScanLineRasterizer r(m_pipeline);
-	r.setup(p1, p2, p3, m_width, m_height);
+	r.setup(&p1, &p2, &p3, m_width, m_height);
 	r.rasterize();
 }
 

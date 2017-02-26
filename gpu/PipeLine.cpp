@@ -22,11 +22,17 @@ namespace gapi
 	//	setSampleMask(1, &p);
 	}
 
-	void Pipeline::invokePixelShader(int x, int y, ShaderIO& p, PSOutput& out)
+	void Pipeline::invokePixelShader(int x, int y, ShaderIO* v1, ShaderIO* v2, ShaderIO* v3, float u, float v, float w, PSOutput& out)
 	{
 		if (m_pixelShader)
 		{
-			m_pixelShader(x, y, p, out);
+			ShaderIO psInput;
+			for (int i = 0; i < ShaderIO::dataCount; i++)
+			{
+				psInput.data[i] = getFromBarycentric2(v1->data[i], v2->data[i], v3->data[i], u, v, w);
+			}
+			out.outZ = psInput.data[0].z;
+			m_pixelShader(x, y, psInput, out);
 		}
 	}
 

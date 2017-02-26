@@ -6,7 +6,6 @@ namespace gapi
 	struct ScreenTriangle
 	{
 		P p1, p2, p3;
-		//P _p1, _p2, _p3;
 	};
 
 	class ScanLineRasterizer : public Rasterizer
@@ -15,28 +14,27 @@ namespace gapi
 		ScanLineRasterizer(Pipeline& pipeline);
 		~ScanLineRasterizer() {}
 
-		virtual void setup(ShaderIO& vertexData1, ShaderIO& vertexData2, ShaderIO& vertexData3, int w, int h) override;
+		virtual void setup(ShaderIO* vertexData1, ShaderIO* vertexData2, ShaderIO* vertexData3, int w, int h) override;
 		virtual void rasterize() override;
 
 	private:
 		//	 1
 		//  / \
 		// 2---3
-		void rasterizeTriangleBottom(ScreenTriangle& s, ShaderIO& vertexData1, ShaderIO& vertexData2, ShaderIO& vertexData3);
+		void rasterizeTriangleBottom(ScreenTriangle& s);
 		
 		// 1---2
 		//  \ /
 		//   3
-		void rasterizeTriangleTop(ScreenTriangle& s, ShaderIO& vertexData1, ShaderIO& vertexData2, ShaderIO& vertexData3);
-		void rasterizeStraightLine(ScreenTriangle& s, float x1, float x2, int y, ShaderIO& vertexData1, ShaderIO& vertexData2, ShaderIO& vertexData3, bool bottom);
+		void rasterizeTriangleTop(ScreenTriangle& s);
+		void rasterizeStraightLine(ScreenTriangle& s, float x1, float x2, int y, bool bottom);
 		void coverageTest(P& p, ScreenTriangle& s, bool bottom);
 		void convertFromNDC(P& p, ShaderIO& vertexData);
 
 	private:
-		ShaderIO m_vertexData1;
-		ShaderIO m_vertexData2;
-		ShaderIO m_vertexData3;
-		ShaderIO m_vertexData4;
+		ShaderIO* m_vertexData1;
+		ShaderIO* m_vertexData2;
+		ShaderIO* m_vertexData3;
 		int m_w;
 		int m_h;
 		ScreenTriangle m_screenTriangle;

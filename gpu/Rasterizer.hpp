@@ -12,7 +12,7 @@ namespace gapi
 		{}
 		virtual ~Rasterizer() {}
 
-		virtual void setup(ShaderIO& p1, ShaderIO& p2, ShaderIO& p3, int w, int h) = 0;
+		virtual void setup(ShaderIO* p1, ShaderIO* p2, ShaderIO* p3, int w, int h) = 0;
 		virtual void rasterize() = 0;
 	protected:
 		Pipeline& m_pipeLine;

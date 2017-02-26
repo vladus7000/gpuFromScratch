@@ -7,7 +7,7 @@ namespace gapi
 		: Rasterizer(pipeline)
 	{}
 
-	void ScanLineRasterizer::setup(ShaderIO& p1, ShaderIO& p2, ShaderIO& p3, int w, int h)
+	void ScanLineRasterizer::setup(ShaderIO* p1, ShaderIO* p2, ShaderIO* p3, int w, int h)
 	{
 		m_vertexData1 = p1;
 		m_vertexData2 = p2;
@@ -15,14 +15,11 @@ namespace gapi
 		m_w = w;
 		m_h = h;
 
-		convertFromNDC(m_screenTriangle.p1, m_vertexData1);
-		convertFromNDC(m_screenTriangle.p2, m_vertexData2);
-		convertFromNDC(m_screenTriangle.p3, m_vertexData3);
+		convertFromNDC(m_screenTriangle.p1, *m_vertexData1);
+		convertFromNDC(m_screenTriangle.p2, *m_vertexData2);
+		convertFromNDC(m_screenTriangle.p3, *m_vertexData3);
 
 		m_screenTriangleO = m_screenTriangle;
-	//	m_s._p1 = m_s.p1;
-	//	m_s._p2 = m_s.p2;
-	//	m_s._p3 = m_s.p3;
 	}
 
 	void ScanLineRasterizer::rasterize()
@@ -30,37 +27,24 @@ namespace gapi
 		// from: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
 		if (m_screenTriangle.p1.y < m_screenTriangle.p2.y)
 		{
-		//	std::swap(m_vertexData1, m_vertexData2);
 			std::swap(m_screenTriangle.p1, m_screenTriangle.p2);
 		}
 		if (m_screenTriangle.p2.y < m_screenTriangle.p3.y)
 		{
-		//	std::swap(m_vertexData2, m_vertexData3);
 			std::swap(m_screenTriangle.p2, m_screenTriangle.p3);
 		}
 		if (m_screenTriangle.p1.y < m_screenTriangle.p2.y)
 		{
-		//	std::swap(m_vertexData1, m_vertexData2);
 			std::swap(m_screenTriangle.p1, m_screenTriangle.p2);
 		}
 
 		if (m_screenTriangle.p2.y == m_screenTriangle.p3.y)
 		{
-			/*if (m_screenTriangle.p2.realX > m_screenTriangle.p3.realX)
-			{
-				std::swap(m_vertexData2, m_vertexData3);
-				std::swap(m_screenTriangle.p3, m_screenTriangle.p2);
-			}*/
-			rasterizeTriangleBottom(m_screenTriangle, m_vertexData1, m_vertexData2, m_vertexData3);
+			rasterizeTriangleBottom(m_screenTriangle);
 		}
 		else if (m_screenTriangle.p1.y == m_screenTriangle.p2.y)
 		{
-			/*if (m_screenTriangle.p1.realX > m_screenTriangle.p2.realX)
-			{
-				std::swap(m_vertexData1, m_vertexData2);
-				std::swap(m_screenTriangle.p1, m_screenTriangle.p2);
-			}*/
-			rasterizeTriangleTop(m_screenTriangle, m_vertexData1, m_vertexData2, m_vertexData3);
+			rasterizeTriangleTop(m_screenTriangle);
 		}
 		else
 		{
@@ -71,43 +55,32 @@ namespace gapi
 			float a = 0, b = 0, c = 0;
 			Barycentric(Point2(newPoint.realX, newPoint.realY), Point2(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY), Point2(m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY), Point2(m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY), a, b, c);
 
-			newPoint.x = std::lroundf(newPoint.realX);// getFromBarycentric2(m_screenTriangle.p1.realX, m_screenTriangle.p2.realX, m_screenTriangle.p3.realX, a, b, c);
-			newPoint.y = std::lroundf(newPoint.realY);// getFromBarycentric2(m_screenTriangle.p1.realY, m_screenTriangle.p2.realY, m_screenTriangle.p3.realY, a, b, c);
-
-
-
-			for (int i = 0; i < ShaderIO::dataCount; i++)
-			{
-				m_vertexData4.data[i] = getFromBarycentric2(m_vertexData1.data[i], m_vertexData2.data[i], m_vertexData3.data[i], a, b, c);
-			}
+			newPoint.x = std::lroundf(newPoint.realX);
+			newPoint.y = std::lroundf(newPoint.realY);
 			
 			m_screenTriangleBottom = m_screenTriangle;
 			m_screenTriangleBottom.p3 = newPoint;
 			if (m_screenTriangleBottom.p2.realX > m_screenTriangleBottom.p3.realX)
 			{
 				std::swap(m_screenTriangleBottom.p3, m_screenTriangleBottom.p2);
-			//	std::swap(m_vertexData4, m_vertexData2); //TODO: same check
 			}
 
-			//rasterizeTriangleBottom(m_screenTriangleBottom, m_vertexData4, m_vertexData2, m_vertexData3);
-			rasterizeTriangleBottom(m_screenTriangleBottom, m_vertexData1, m_vertexData2, m_vertexData3);
+			rasterizeTriangleBottom(m_screenTriangleBottom);
 			m_screenTriangleTop = m_screenTriangle;
 			m_screenTriangleTop.p1 = m_screenTriangle.p2;
 			m_screenTriangleTop.p2 = newPoint;
 			if (m_screenTriangleTop.p1.realX > m_screenTriangleTop.p2.realX)
 			{
-				//std::swap(m_vertexData4, m_vertexData2); //TODO: same check
 				std::swap(m_screenTriangleTop.p1, m_screenTriangleTop.p2);
 			}
-			//rasterizeTriangleTop(m_screenTriangleTop, m_vertexData2, m_vertexData4, m_vertexData3);
-			rasterizeTriangleTop(m_screenTriangleTop, m_vertexData1, m_vertexData2, m_vertexData3);
+			rasterizeTriangleTop(m_screenTriangleTop);
 		}
 	}
 
 	//	 1
 	//  / \
 	// 2---3
-	void ScanLineRasterizer::rasterizeTriangleBottom(ScreenTriangle& s, ShaderIO& p1, ShaderIO& p2, ShaderIO& p3)
+	void ScanLineRasterizer::rasterizeTriangleBottom(ScreenTriangle& s)
 	{
 		float invSlope1 = -(float)(s.p2.x - s.p1.x) / (float)(s.p2.y - s.p1.y);
 		float invSlope2 = -(float)(s.p3.x - s.p1.x) / (float)(s.p3.y - s.p1.y);
@@ -116,7 +89,7 @@ namespace gapi
 		float curX2 = s.p1.x;
 		for (int slY = std::floorf(s.p1.realY); slY >= std::ceilf(s.p2.realY); slY--)
 		{
-			rasterizeStraightLine(s, (curX), (curX2), slY, p1, p2, p3, true);
+			rasterizeStraightLine(s, (curX), (curX2), slY, true);
 			curX += invSlope1;
 			curX2 += invSlope2;
 		}
@@ -125,7 +98,7 @@ namespace gapi
 	// 1---2
 	//  \ /
 	//   3
-	void ScanLineRasterizer::rasterizeTriangleTop(ScreenTriangle& s, ShaderIO& p1, ShaderIO& p2, ShaderIO& p3)
+	void ScanLineRasterizer::rasterizeTriangleTop(ScreenTriangle& s)
 	{
 		float invSlope1 = -(float)(s.p3.x - s.p1.x) / (float)(s.p3.y - s.p1.y);
 		float invSlope2 = -(float)(s.p3.x - s.p2.x) / (float)(s.p3.y - s.p2.y);
@@ -135,15 +108,14 @@ namespace gapi
 
 		for (int slY = std::floorf(s.p3.realY); slY < std::ceilf(s.p1.realY); slY++)
 		{
-			rasterizeStraightLine(s, (curX), (curX2), slY, p1, p2, p3, false);
+			rasterizeStraightLine(s, (curX), (curX2), slY, false);
 			curX -= invSlope1;
 			curX2 -= invSlope2;
 		}
 	}
 
-	void ScanLineRasterizer::rasterizeStraightLine(ScreenTriangle& s, float x1, float x2, int y, ShaderIO& p1, ShaderIO& p2, ShaderIO& p3, bool bottom)
+	void ScanLineRasterizer::rasterizeStraightLine(ScreenTriangle& s, float x1, float x2, int y, bool bottom)
 	{
-		ShaderIO psInput;
 		if (x2 < x1)
 		{
 			std::swap(x1, x2);
@@ -162,23 +134,16 @@ namespace gapi
 			p.realY = y;
 
 			float a = 0, b = 0, c = 0;
-			//Barycentric(P(p.realX, p.realY), P(s.p1.realX, s.p1.realY), P(s.p2.realX, s.p2.realY), P(s.p3.realX, s.p3.realY), a, b, c);
 			Barycentric(P(p.realX, p.realY), P(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY), P(m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY), P(m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY), a, b, c);
 
 			coverageTest(p, s, bottom); // TODO:!!!
 			if (p.needShade || 0)
 			{
-				for (int i = 0; i < ShaderIO::dataCount; i++)
-				{
-					psInput.data[i] = getFromBarycentric2(p1.data[i], p2.data[i], p3.data[i], a, b, c);
-				}
-
 				int screenX = i;
 				int screenY = y;
 
 				PSOutput out;
-				out.outZ = psInput.data[0].z;
-				m_pipeLine.invokePixelShader(screenX, screenY, psInput, out);
+				m_pipeLine.invokePixelShader(screenX, screenY, m_vertexData1, m_vertexData2, m_vertexData3, a, b, c, out);
 
 				if (m_pipeLine.depthTest(screenX, screenY, out.outZ))
 				{
@@ -195,7 +160,7 @@ namespace gapi
 				out.colorBuffer.x = 1.0f;
 				out.colorBuffer.y = bottom ? 0.0f : 1.0f;
 				out.colorBuffer.z = 0.0f;
-				out.outZ = psInput.data[0].z;
+				out.outZ = 0;
 
 				if (m_pipeLine.depthTest(i, y, out.outZ))
 				{

@@ -14,7 +14,7 @@ namespace gapi
 
 	public:
 		Pipeline(GraphicsAPI& gapi);
-		void invokePixelShader(int x, int y, ShaderIO& p, PSOutput& out);
+		void invokePixelShader(int x, int y, ShaderIO* v1, ShaderIO* v2, ShaderIO* v3, float u, float v, float w, PSOutput& out);
 		void invokeVertexShader(ShaderIO& p);
 		void setVertexShader(const vertexShaderType& vertexProgram) { m_vertexShader = vertexProgram; }
 		void setPixelShader(const pixelShaderType& pixelProgram) { m_pixelShader = pixelProgram; }
