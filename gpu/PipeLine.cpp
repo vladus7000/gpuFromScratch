@@ -8,12 +8,14 @@ namespace gapi
 	Pipeline::Pipeline(GraphicsAPI& gapi)
 		: m_gapi(gapi)
 	{
-		m_sampleTests = 4;
-		//float maskX[] = { -0.4f, 0.05f, 0.4f, -0.05f };
-		//float maskY[] = { 0.05f, 0.4f, -0.05f, -0.4f };
-		float maskX[] = { -0.5f, 0.0f, 0.5f, 0.0f };
+		m_sampleTests = g_numSamples;
+	//	float maskX[] = { -0.4f, 0.05f, 0.4f, -0.05f };
+	//	float maskY[] = { 0.05f, 0.4f, -0.05f, -0.4f };
+		float maskX[] = { 0.0f, 0.0f, 0.5f, 0.0f };
 		float maskY[] = { 0.0f, 0.5f, 0.0f, -0.5f };
-		for (int i = 0; i < 4; i++)
+	//	float maskX[] = { -0.5f, -0.5f, 0.5f, 0.5f };
+	//	float maskY[] = { -0.5f, 0.5f, 0.5f, -0.5f };
+		for (int i = 0; i < m_sampleTests; i++)
 		{
 			m_sampleMask[i].x = maskX[i];
 			m_sampleMask[i].y = maskY[i];
@@ -57,6 +59,17 @@ namespace gapi
 		float frac = (float)tests / (float)m_sampleTests;
 		Point4 res = in.colorBuffer * frac + p1 * (1.0f - frac);
 		m_gapi.setPixel(x, y, Pixel(res.x, res.y, res.z));
+	}
+
+	void Pipeline::mergeSample(unsigned int x, unsigned int y, P& in, PSOutput& out)
+	{
+		for (int i = 0; i < g_numSamples; i++)
+		{
+			if (in.samplesCovered[i])
+			{
+				m_gapi.setSampleColor(x, y, i, Pixel(out.colorBuffer.x, out.colorBuffer.y, out.colorBuffer.z));
+			}
+		}
 	}
 	
 	void Pipeline::setSampleMask(int count, Point2* mask)

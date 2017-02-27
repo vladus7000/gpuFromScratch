@@ -112,7 +112,7 @@ namespace gapi
 GraphicsAPI::GraphicsAPI(unsigned int w, unsigned int h, unsigned long int flags)
 	: m_width(w)
 	, m_height(h)
-	, m_frameBuffer(new Pixel[w*h])
+	, m_frameBuffer(new FB[w*h])
 	, m_Zbuffer(new float[w*h])
 	, m_flags(flags)
 	, m_indexBuffer(nullptr)
@@ -155,7 +155,11 @@ void GraphicsAPI::clear(const Pixel& pixelColor)
 {
 	for (unsigned int i = 0; i < m_width * m_height; i++)
 	{
-		m_frameBuffer[i] = pixelColor;
+		m_frameBuffer[i].finalColor = pixelColor;
+		for (int j = 0; j < g_numSamples; j++)
+		{
+			m_frameBuffer[i].samples[j] = pixelColor;
+		}
 		m_Zbuffer[i] = 1.0f;
 	}
 }
@@ -209,7 +213,7 @@ void GraphicsAPI::loadPicture(const char* path)
 		}
 
 		m_Zbuffer = new float[width * height];
-		m_frameBuffer = new Pixel[width * height];
+		m_frameBuffer = new FB[width * height];
 	}
 
 	auto frameBuffer = getFrameBuffer();
@@ -217,7 +221,11 @@ void GraphicsAPI::loadPicture(const char* path)
 	for (unsigned int i = 0; i < width * height; i++)
 	{
 		m_Zbuffer[i] = 1.0f;
-		frameBuffer[i] = Pixel(data[i * 3 + 2] / 255.0f, data[i * 3 + 1] / 255.0f, data[i * 3] / 255.0f);
+		frameBuffer[i].finalColor = Pixel(data[i * 3 + 2] / 255.0f, data[i * 3 + 1] / 255.0f, data[i * 3] / 255.0f);
+		for (int j = 0; j < g_numSamples; j++)
+		{
+			m_frameBuffer[i].samples[j] = frameBuffer[i].finalColor;
+		}
 	}
 	FreeImage_Unload(dib);
 }
@@ -289,7 +297,7 @@ void GraphicsAPI::setPixel(unsigned int x, unsigned int y, const Pixel & pixelCo
 		{
 			_y = (m_height - 1) - y;
 		}
-		m_frameBuffer[_y * m_width + x] = pixelColor;
+		m_frameBuffer[_y * m_width + x].finalColor = pixelColor;
 	}
 }
 
@@ -303,7 +311,7 @@ const Pixel& GraphicsAPI::getPixel(const Point2& p)
 		{
 			y = m_height - p.y - 1;
 		}
-		return m_frameBuffer[(int)p.y * m_width + (int)p.x];
+		return m_frameBuffer[(int)p.y * m_width + (int)p.x].finalColor;
 	}
 	return wrongPixel;
 }
@@ -516,6 +524,44 @@ Point4 GraphicsAPI::sampleTexture(const Point2& tCoord)
 			(Cxy1 * u_opposite + Cx1y1 * u_ratio) * v_ratio;
 	}
 	return Point4(result.x, result.y, result.z, 0.0f);
+}
+
+void GraphicsAPI::resolveFB()
+{
+	for (unsigned int i = 0; i < m_width * m_height; i++)
+	{
+		float r = 0.0f;
+		float g = 0.0f;
+		float b = 0.0f;
+		for (int j = 0; j < g_numSamples; j++)
+		{
+			r += m_frameBuffer[i].samples[j].r;
+			g += m_frameBuffer[i].samples[j].g;
+			b += m_frameBuffer[i].samples[j].b;
+		}
+
+		r /= (float)g_numSamples;
+		g /= (float)g_numSamples;
+		b /= (float)g_numSamples;
+
+		m_frameBuffer[i].finalColor.r = r;
+		m_frameBuffer[i].finalColor.g = g;
+		m_frameBuffer[i].finalColor.b = b;
+	}
+}
+
+void GraphicsAPI::setSampleColor(unsigned int x, unsigned int y, unsigned int subSample, const Pixel & pixelColor)
+{
+	if (x < m_width && y < m_height && x >= 0 && y >= 0)
+	{
+		unsigned int _y = y;
+
+		if (m_flags & Y_AXIS_TOP)
+		{
+			_y = (m_height - 1) - y;
+		}
+		m_frameBuffer[_y * m_width + x].samples[subSample] = pixelColor;
+	}
 }
 
 void GraphicsAPI::Draw(unsigned int vertexCount, unsigned int startVertexLocation)

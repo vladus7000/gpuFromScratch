@@ -122,7 +122,7 @@ namespace gapi
 		float curX = s.p3.x;
 		float curX2 = s.p3.x;
 
-		for (int slY = std::floorf(s.p3.realY); slY < std::ceilf(s.p1.realY); slY++)
+		for (int slY = std::floorf(s.p3.realY); slY <= std::ceilf(s.p1.realY); slY++)
 		{
 			rasterizeStraightLine(s, (curX), (curX2), slY, false);
 			curX -= invSlope1;
@@ -170,7 +170,8 @@ namespace gapi
 
 				if (m_pipeLine.depthTest(screenX, screenY, out.outZ))
 				{
-					m_pipeLine.blener(screenX, screenY, out, /*p.sampelCovered*/4);
+					//m_pipeLine.blener(screenX, screenY, out, p.numSamplesCovered);
+					m_pipeLine.mergeSample(i, y, p, out);
 				}
 			}
 			else
@@ -187,7 +188,8 @@ namespace gapi
 
 				if (m_pipeLine.depthTest(i, y, out.outZ))
 				{
-					m_pipeLine.blener(i, y, out, p.sampelCovered);
+					//m_pipeLine.blener(i, y, out, p.numSamplesCovered);
+				//	m_pipeLine.mergeSample(i, y, )
 				}
 			}
 		}
@@ -197,7 +199,8 @@ namespace gapi
 	{
 		const Point2* mask = m_pipeLine.getSampleMask();
 		for (int i = 0; i < m_pipeLine.getSampleTests(); i++)
-		{			
+		{
+			screenPoint.samplesCovered[i] = false;
 			bool test = true;
 			/*if (bottom)
 			{
@@ -216,8 +219,9 @@ namespace gapi
 			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY); // P3P1
 			if (test)
 			{
+				screenPoint.samplesCovered[i] = true;
 				screenPoint.needShade = true;
-				screenPoint.sampelCovered++;
+				screenPoint.numSamplesCovered++;
 			}
 		}	
 	}

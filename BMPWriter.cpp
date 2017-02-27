@@ -1,5 +1,7 @@
 #include "BMPWriter.h"
 #include <fstream>
+#include "gpu/Math.hpp"
+
 
 __pragma(pack(push, 1))
 struct BMPHeader
@@ -32,6 +34,7 @@ namespace writer
 			float r;
 			float g;
 			float b;
+			float pad[gapi::g_numSamples * 3];
 		};
 
 		BMPHeader header;

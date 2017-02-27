@@ -1,7 +1,10 @@
 #pragma once
 
+#include <string.h> //memset
+
 namespace gapi
 {
+	const int g_numSamples = 1;
 	struct Pixel
 	{
 		Pixel(float r = 0.0f, float g = 0.0f, float b = 0.0f)
@@ -14,6 +17,14 @@ namespace gapi
 		float r;
 		float g;
 		float b;
+
+		
+	};
+
+	struct FB
+	{
+		Pixel finalColor;
+		Pixel samples[g_numSamples];
 	};
 
 	struct Point3
@@ -296,9 +307,9 @@ namespace gapi
 			, fracX(0.0f)
 			, fracY(0.0f)
 			, needShade(false)
-			, sampelCovered(0)
+			, numSamplesCovered(0)
 		{
-
+			memset(samplesCovered, false, sizeof(bool) * g_numSamples);
 		}
 		P operator-(const P& rhs)
 		{
@@ -308,11 +319,12 @@ namespace gapi
 
 			return p;
 		}
-		int sampelCovered;
+		int numSamplesCovered;
 		int x, y;
 		float fracX, fracY;
 		float realX, realY;
 		bool needShade;
+		bool samplesCovered[g_numSamples];
 	};
 	inline float dot(const Point4& a, const Point4&b)
 	{

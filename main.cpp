@@ -11,7 +11,7 @@ using namespace gapi;
 int main()
 {
 
-	GraphicsAPI myApi(800, 800, GraphicsAPI::Y_AXIS_TOP);
+	GraphicsAPI myApi(1000, 1000, GraphicsAPI::Y_AXIS_TOP);
 	myApi.clear(Pixel(0.4f, 0.5f, 0.4f));
 
 	//myApi.loadPicture("Preview.jpg");
@@ -180,6 +180,7 @@ int main()
 				myApi.DrawIndexed(6, 0, 0);
 
 			}
+			myApi.resolveFB();
 			auto frameBuffer = myApi.getFrameBuffer();
 			std::string s("picture");
 			s += std::to_string(i + 1);

@@ -31,8 +31,8 @@ namespace gapi
 		void drawLine(const Point2& p1, const Point2& p2, const Pixel& pixelColor);
 		void drawCircle(const Point2& p, unsigned int r, const Pixel& pixelColor, bool filled);
 
-		const Pixel* getFrameBuffer() const { return m_frameBuffer; }
-		Pixel* getFrameBuffer() { return m_frameBuffer; }
+		const FB* getFrameBuffer() const { return m_frameBuffer; }
+		FB* getFrameBuffer() { return m_frameBuffer; }
 		unsigned int getWidth() const { return m_width; }
 		unsigned int getHeight() const { return m_height; }
 
@@ -54,6 +54,9 @@ namespace gapi
 		bool depthTest(int screenX, int screenY, float z);
 		Point4 sampleTexture(const Point2& tCoord);
 
+		void resolveFB();
+		void setSampleColor(unsigned int x, unsigned int y, unsigned int subSample, const Pixel& pixelColor);
+
 	private:
 		void processTriangle(ShaderIO& p1, ShaderIO& p2, ShaderIO& p3);
 
@@ -63,7 +66,7 @@ namespace gapi
 	private:
 		unsigned int m_width;
 		unsigned int m_height;
-		Pixel* m_frameBuffer;
+		FB* m_frameBuffer;
 		float* m_Zbuffer;
 		unsigned long int m_flags;
 

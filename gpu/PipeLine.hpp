@@ -22,7 +22,9 @@ namespace gapi
 		bool depthTest(int screenX, int screenY, float z);
 		void blener(unsigned int x, unsigned int y, PSOutput& in, int tests);
 
-		int getSampleTests() const { return m_sampleTests; }
+		void mergeSample(unsigned int x, unsigned int y, P& in, PSOutput& out);
+
+		int getSampleTests() const { return /*m_sampleTests;*/ g_numSamples; }
 		const Point2* getSampleMask() const { return m_sampleMask; }
 
 		void setSampleMask(int count, Point2* mask);
