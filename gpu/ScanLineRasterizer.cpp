@@ -3,6 +3,25 @@
 #include <iostream>
 namespace gapi
 {
+	namespace
+	{
+		float edgeFunc(float x, float y, float X1, float Y1, float X2, float Y2)
+		{
+			float dx = X2 - X1;
+			float dy = Y2 - Y1;
+			return ((x - X1)* dy - (y - Y1) * dx);
+
+		}
+		bool onRight(float x, float y, float X1, float Y1, float X2, float Y2)
+		{
+			if (edgeFunc(x, y, X1, Y1, X2, Y2) >= 0.0f)
+			{
+				return true;
+			}
+			return false;
+		}
+	}
+
 	ScanLineRasterizer::ScanLineRasterizer(Pipeline& pipeline)
 		: Rasterizer(pipeline)
 	{}
@@ -52,9 +71,6 @@ namespace gapi
 			newPoint.realX = m_screenTriangle.p1.realX + (float)(m_screenTriangle.p2.realY - m_screenTriangle.p1.realY) / (float)(m_screenTriangle.p3.realY - m_screenTriangle.p1.realY)*(float)(m_screenTriangle.p3.realX - m_screenTriangle.p1.realX);
 			newPoint.realY = m_screenTriangle.p2.realY;
 	
-			float a = 0, b = 0, c = 0;
-			Barycentric(Point2(newPoint.realX, newPoint.realY), Point2(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY), Point2(m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY), Point2(m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY), a, b, c);
-
 			newPoint.x = std::lroundf(newPoint.realX);
 			newPoint.y = std::lroundf(newPoint.realY);
 			
@@ -133,17 +149,24 @@ namespace gapi
 			p.realX = i;
 			p.realY = y;
 
-			float a = 0, b = 0, c = 0;
-			Barycentric(P(p.realX, p.realY), P(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY), P(m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY), P(m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY), a, b, c);
-
 			coverageTest(p, s, bottom); // TODO:!!!
 			if (p.needShade || 0)
 			{
 				int screenX = i;
 				int screenY = y;
 
+				float area = edgeFunc(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
+
+				float u = edgeFunc(p.realX, p.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
+				float v = edgeFunc(p.realX, p.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY);
+				float w = edgeFunc(p.realX, p.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY);
+
+				u /= area; // barycentric u
+				v /= area; // barycentric v
+				w /= area; // barycentric w
+
 				PSOutput out;
-				m_pipeLine.invokePixelShader(screenX, screenY, m_vertexData1, m_vertexData2, m_vertexData3, a, b, c, out);
+				m_pipeLine.invokePixelShader(screenX, screenY, m_vertexData1, m_vertexData2, m_vertexData3, u, v, w, out);
 
 				if (m_pipeLine.depthTest(screenX, screenY, out.outZ))
 				{
@@ -167,21 +190,6 @@ namespace gapi
 					m_pipeLine.blener(i, y, out, p.sampelCovered);
 				}
 			}
-		}
-	}
-
-	namespace
-	{
-		bool onRight(float x, float y, float X1, float Y1, float X2, float Y2)
-		{
-			float dx = X2 - X1;
-			float dy = Y2 - Y1;
-			float res = ((x - X1)* dy - (y - Y1) * dx);
-			if (res >= 0.0f)
-			{
-				return true;
-			}
-			return false;
 		}
 	}
 
