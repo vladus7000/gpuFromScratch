@@ -11,7 +11,7 @@ using namespace gapi;
 int main()
 {
 
-	GraphicsAPI myApi(500, 500, GraphicsAPI::Y_AXIS_TOP);
+	GraphicsAPI myApi(2000, 2000, GraphicsAPI::Y_AXIS_TOP);
 	myApi.clear(Pixel(0.4f, 0.5f, 0.4f));
 
 	//myApi.loadPicture("Preview.jpg");
@@ -183,7 +183,7 @@ int main()
 					out.colorBuffer = myApi.sampleTexture(Point2(p.data[2].x, p.data[2].y));// *std::max(0.0f, dot(p.data[1] * -1.0f, Point4(-0.5, -0.5, 0.5, 0.0f))) + Point4(0.08f, 0.08f, 0.08f, 0);
 				};
 				std::cout << "rendering full screen quad ... \n";
-				Point3 ps[] = { { -1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f } };
+				Point3 ps[] = { { -1.0f + 1.0f/1000.0f, -1.0f + 1.0f / 1000.0f, 0.0f },{ -1.0f + 1.0f / 1000.0f, 1.0f - 1.0f / 1000.0f, 0.0f },{ 1.0f - 1.0f / 1000.0f, 1.0f - 1.0f / 1000.0f, 0.0f },{ 1.0f- 1.0f / 1000.0f, -1.0f+ 1.0f / 1000.0f, 0.0f } };
 				Point3 tc[] = { { 0.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f } };
 				unsigned int in[] = { 0,1,2, 0, 2, 3 };
 				myApi.setVertexBuffer((Point3*)ps, 4);

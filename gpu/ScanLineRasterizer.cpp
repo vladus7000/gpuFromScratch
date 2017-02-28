@@ -248,7 +248,7 @@ namespace gapi
 
 	void ScanLineRasterizer::convertFromNDC(P& screenPoint, ShaderIO & vertexData)
 	{
-		screenPoint.realX = ((vertexData.data[0].x + 1.0f) / 2.0f * ((float)m_w));
+		screenPoint.realX = ((vertexData.data[0].x + 1.0f) / 2.0f * ((float)m_w)); // -1.0f
 		screenPoint.x = std::lroundf(screenPoint.realX);
 		if (screenPoint.x >= m_w)
 		{
@@ -256,7 +256,7 @@ namespace gapi
 		}
 		screenPoint.fracX = screenPoint.realX - (float)screenPoint.x;
 		
-		screenPoint.realY = ((vertexData.data[0].y + 1.0f) / 2.0f * ((float)m_h));
+		screenPoint.realY = ((vertexData.data[0].y + 1.0f) / 2.0f * ((float)m_h)); // -1.0f
 		screenPoint.y = std::lroundf(screenPoint.realY);
 		if (screenPoint.y >= m_h)
 		{

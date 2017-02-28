@@ -511,7 +511,6 @@ Point4 GraphicsAPI::sampleTexture(const Point2& tCoord)
 		}
 
 		Pixel _Cxy = m_textureData[_y * m_textureW + _x];
-		
 		Pixel _Cx1y = m_textureData[_y * m_textureW + (_x + 1)% m_textureW];
 		Pixel _Cxy1 = m_textureData[((_y + 1) % m_textureH) * m_textureW + _x];
 		Pixel _Cx1y1 = m_textureData[((_y + 1)% m_textureH) * m_textureW + (_x + 1) % m_textureW];
