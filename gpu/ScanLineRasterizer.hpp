@@ -27,7 +27,7 @@ namespace gapi
 		//  \ /
 		//   3
 		void rasterizeTriangleTop(ScreenTriangle& s);
-		void rasterizeStraightLine(ScreenTriangle& s, float x1, float x2, int y, bool bottom);
+		void rasterizeStraightLine(ScreenTriangle& s, int x1, int x2, int y, bool bottom);
 		void coverageTest(P& p, ScreenTriangle& s, bool bottom);
 		void convertFromNDC(P& p, ShaderIO& vertexData);
 

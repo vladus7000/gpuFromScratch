@@ -20,6 +20,7 @@ namespace gapi
 		void setPixelShader(const pixelShaderType& pixelProgram) { m_pixelShader = pixelProgram; }
 
 		bool depthTest(int screenX, int screenY, float z);
+		bool sampleDepthTest(int screenX, int screenY, int sample, float z);
 		void blener(unsigned int x, unsigned int y, PSOutput& in, int tests);
 
 		void mergeSample(unsigned int x, unsigned int y, P& in, PSOutput& out);

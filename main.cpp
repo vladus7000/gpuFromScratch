@@ -11,7 +11,7 @@ using namespace gapi;
 int main()
 {
 
-	GraphicsAPI myApi(1000, 1000, GraphicsAPI::Y_AXIS_TOP);
+	GraphicsAPI myApi(500, 500, GraphicsAPI::Y_AXIS_TOP);
 	myApi.clear(Pixel(0.4f, 0.5f, 0.4f));
 
 	//myApi.loadPicture("Preview.jpg");
@@ -170,6 +170,18 @@ int main()
 			}
 			else
 			{
+				auto v = [](ShaderIO& i)
+				{
+					Matrix4x4 m;
+					m.setScale(0.5f, 0.5f, 0.5f);
+					//i.data[0] = m * i.data[0];
+				};
+
+				auto p = [&](int x, int y, ShaderIO& p, PSOutput& out)
+				{
+					//Point4(0.5f, 0.5f, 0.0f, 0)
+					out.colorBuffer = myApi.sampleTexture(Point2(p.data[2].x, p.data[2].y));// *std::max(0.0f, dot(p.data[1] * -1.0f, Point4(-0.5, -0.5, 0.5, 0.0f))) + Point4(0.08f, 0.08f, 0.08f, 0);
+				};
 				std::cout << "rendering full screen quad ... \n";
 				Point3 ps[] = { { -1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f } };
 				Point3 tc[] = { { 0.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f } };
@@ -177,6 +189,8 @@ int main()
 				myApi.setVertexBuffer((Point3*)ps, 4);
 				myApi.setNBuffer((Point3*)tc, 1);
 				myApi.setIndexBuffer(in, 6);
+				myApi.setVertexShader(v);
+				myApi.setPixelShader(p);
 				myApi.DrawIndexed(6, 0, 0);
 
 			}

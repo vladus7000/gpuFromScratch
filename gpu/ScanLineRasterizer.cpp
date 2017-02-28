@@ -103,9 +103,11 @@ namespace gapi
 
 		float curX = s.p1.x;
 		float curX2 = s.p1.x;
-		for (int slY = std::floorf(s.p1.realY); slY >= std::ceilf(s.p2.realY); slY--)
+		//for (int slY = std::floorf(s.p1.realY); slY >= std::ceilf(s.p2.realY); slY--)
+		//for (int slY = std::lroundf(s.p1.realY); slY >= std::lroundf(s.p2.realY); slY--)
+		for (int slY = s.p1.y; slY >= s.p2.y; slY--)
 		{
-			rasterizeStraightLine(s, (curX), (curX2), slY, true);
+			rasterizeStraightLine(s, std::lroundf(curX), std::lroundf(curX2), slY, true);
 			curX += invSlope1;
 			curX2 += invSlope2;
 		}
@@ -122,21 +124,24 @@ namespace gapi
 		float curX = s.p3.x;
 		float curX2 = s.p3.x;
 
-		for (int slY = std::floorf(s.p3.realY); slY <= std::ceilf(s.p1.realY); slY++)
+		//for (int slY = std::floorf(s.p3.realY); slY <= std::ceilf(s.p1.realY); slY++)
+		//for (int slY = std::lroundf(s.p3.realY); slY <= std::lroundf(s.p1.realY); slY++)
+		for (int slY = s.p3.y; slY <= s.p1.y; slY++)
 		{
-			rasterizeStraightLine(s, (curX), (curX2), slY, false);
+			rasterizeStraightLine(s, std::lroundf(curX), std::lroundf(curX2), slY, false);
 			curX -= invSlope1;
 			curX2 -= invSlope2;
 		}
 	}
 
-	void ScanLineRasterizer::rasterizeStraightLine(ScreenTriangle& s, float x1, float x2, int y, bool bottom)
+	void ScanLineRasterizer::rasterizeStraightLine(ScreenTriangle& s, int x1, int x2, int y, bool bottom)
 	{
 		if (x2 < x1)
 		{
 			std::swap(x1, x2);
 		}
-		for (int i = std::lroundf(x1); i <= std::lroundf(x2); i ++)
+		//for (int i = std::lroundf(x1); i <= std::lroundf(x2); i ++)
+		for (int i = x1; i <= x2; i++)
 		{
 			if (i < 0 || i > m_w || y < 0 || y > m_h)
 			{
@@ -154,7 +159,7 @@ namespace gapi
 			{
 				int screenX = i;
 				int screenY = y;
-
+				
 				float area = edgeFunc(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
 
 				float u = edgeFunc(p.realX, p.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
@@ -168,7 +173,7 @@ namespace gapi
 				PSOutput out;
 				m_pipeLine.invokePixelShader(screenX, screenY, m_vertexData1, m_vertexData2, m_vertexData3, u, v, w, out);
 
-				if (m_pipeLine.depthTest(screenX, screenY, out.outZ))
+				//if (m_pipeLine.depthTest(screenX, screenY, out.outZ))
 				{
 					//m_pipeLine.blener(screenX, screenY, out, p.numSamplesCovered);
 					m_pipeLine.mergeSample(i, y, p, out);
@@ -214,26 +219,49 @@ namespace gapi
 				test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY); // P2P3
 				test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p3.realX, s.p3.realY, s.p1.realX, s.p1.realY); // P3P1
 			}*/
-			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY); // P1P2
-			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY); // P2P3
-			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY); // P3P1
+			test &= onRight(screenPoint.x +0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY); // P1P2
+			test &= onRight(screenPoint.x +0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY); // P2P3
+			test &= onRight(screenPoint.x +0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY); // P3P1
 			if (test)
 			{
-				screenPoint.samplesCovered[i] = true;
-				screenPoint.needShade = true;
-				screenPoint.numSamplesCovered++;
+				float area = edgeFunc(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
+
+				float u = edgeFunc(screenPoint.x + 0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
+				float v = edgeFunc(screenPoint.x + 0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY);
+				float w = edgeFunc(screenPoint.x + 0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY);
+
+				u /= area; // barycentric u
+				v /= area; // barycentric v
+				w /= area; // barycentric w
+
+				float z = getFromBarycentric2(m_vertexData1->data[0].z, m_vertexData2->data[0].z, m_vertexData3->data[0].z, u, v, w);
+
+				if (m_pipeLine.sampleDepthTest(screenPoint.x, screenPoint.y, i, z))
+				{
+					screenPoint.samplesCovered[i] = true;
+					screenPoint.needShade = true;
+					screenPoint.numSamplesCovered++;
+				}
 			}
 		}	
 	}
 
 	void ScanLineRasterizer::convertFromNDC(P& screenPoint, ShaderIO & vertexData)
 	{
-		screenPoint.realX = ((vertexData.data[0].x + 1.0f) / 2.0f * ((float)m_w - 1.0f));
+		screenPoint.realX = ((vertexData.data[0].x + 1.0f) / 2.0f * ((float)m_w));
 		screenPoint.x = std::lroundf(screenPoint.realX);
+		if (screenPoint.x >= m_w)
+		{
+			screenPoint.x = m_w - 1;
+		}
 		screenPoint.fracX = screenPoint.realX - (float)screenPoint.x;
 		
-		screenPoint.realY = ((vertexData.data[0].y + 1.0f) / 2.0f * ((float)m_h - 1.0f));
+		screenPoint.realY = ((vertexData.data[0].y + 1.0f) / 2.0f * ((float)m_h));
 		screenPoint.y = std::lroundf(screenPoint.realY);
+		if (screenPoint.y >= m_h)
+		{
+			screenPoint.y = m_h - 1;
+		}
 		screenPoint.fracY = screenPoint.realY - (float)screenPoint.y;
 	}
 

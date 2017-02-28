@@ -159,6 +159,7 @@ void GraphicsAPI::clear(const Pixel& pixelColor)
 		for (int j = 0; j < g_numSamples; j++)
 		{
 			m_frameBuffer[i].samples[j] = pixelColor;
+			m_frameBuffer[i].samplesZ[j] = 1.0f;
 		}
 		m_Zbuffer[i] = 1.0f;
 	}
@@ -562,6 +563,26 @@ void GraphicsAPI::setSampleColor(unsigned int x, unsigned int y, unsigned int su
 		}
 		m_frameBuffer[_y * m_width + x].samples[subSample] = pixelColor;
 	}
+}
+
+bool GraphicsAPI::sampleDepthTest(int screenX, int screenY, int sample, float z)
+{
+	if (screenX < m_width && screenY < m_height && screenX >= 0 && screenY >= 0 && z <= 1.0f && z >= -1.0f)
+	{
+		z *= -1.0f; // like in DX11
+		unsigned int y = screenY;
+
+		if (m_flags & Y_AXIS_TOP)
+		{
+			y = (m_height - 1) - screenY;
+		}
+		if (z < m_frameBuffer[y * m_width + screenX].samplesZ[sample])
+		{
+			m_frameBuffer[y * m_width + screenX].samplesZ[sample] = z;
+			return true;
+		}
+	}
+	return false;
 }
 
 void GraphicsAPI::Draw(unsigned int vertexCount, unsigned int startVertexLocation)

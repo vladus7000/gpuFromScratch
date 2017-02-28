@@ -56,6 +56,7 @@ namespace gapi
 
 		void resolveFB();
 		void setSampleColor(unsigned int x, unsigned int y, unsigned int subSample, const Pixel& pixelColor);
+		bool sampleDepthTest(int screenX, int screenY, int sample, float z);
 
 	private:
 		void processTriangle(ShaderIO& p1, ShaderIO& p2, ShaderIO& p3);

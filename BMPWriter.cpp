@@ -34,7 +34,7 @@ namespace writer
 			float r;
 			float g;
 			float b;
-			float pad[gapi::g_numSamples * 3];
+			float pad[gapi::g_numSamples * 4]; //rgbZ
 		};
 
 		BMPHeader header;

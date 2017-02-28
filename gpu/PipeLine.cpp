@@ -11,10 +11,10 @@ namespace gapi
 		m_sampleTests = g_numSamples;
 	//	float maskX[] = { -0.4f, 0.05f, 0.4f, -0.05f };
 	//	float maskY[] = { 0.05f, 0.4f, -0.05f, -0.4f };
-		float maskX[] = { 0.0f, 0.0f, 0.5f, 0.0f };
-		float maskY[] = { 0.0f, 0.5f, 0.0f, -0.5f };
-	//	float maskX[] = { -0.5f, -0.5f, 0.5f, 0.5f };
-	//	float maskY[] = { -0.5f, 0.5f, 0.5f, -0.5f };
+	//	float maskX[] = { 0.0f, 0.0f, 0.5f, 0.0f };
+	//	float maskY[] = { 0.0f, 0.5f, 0.0f, -0.5f };
+		float maskX[] = { -0.5f, -0.5f, 0.5f, 0.5f };
+		float maskY[] = { -0.5f, 0.5f, 0.5f, -0.5f };
 		for (int i = 0; i < m_sampleTests; i++)
 		{
 			m_sampleMask[i].x = maskX[i];
@@ -49,6 +49,10 @@ namespace gapi
 	bool Pipeline::depthTest(int screenX, int screenY, float z)
 	{
 		return m_gapi.depthTest(screenX, screenY, z);
+	}
+	bool Pipeline::sampleDepthTest(int screenX, int screenY, int sample, float z)
+	{
+		return m_gapi.sampleDepthTest(screenX, screenY, sample, z);
 	}
 
 	void Pipeline::blener(unsigned int x, unsigned int y, PSOutput& in, int tests)
