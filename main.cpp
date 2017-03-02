@@ -11,7 +11,7 @@ using namespace gapi;
 int main()
 {
 
-	GraphicsAPI myApi(2000, 2000, GraphicsAPI::Y_AXIS_TOP);
+	GraphicsAPI myApi(1700, 1700, GraphicsAPI::Y_AXIS_TOP);
 	myApi.clear(Pixel(0.4f, 0.5f, 0.4f));
 
 	//myApi.loadPicture("Preview.jpg");
@@ -65,7 +65,7 @@ int main()
 	{
 		std::cout << "rendering " << i + 1 << " frame from " << nFrames << " ... \n";
 		
-		for (int t = 0; t < 5; t++)
+		for (int t = 0; t < 6; t++)
 		{
 			myApi.clear(Pixel(0.4f, 0.5f, 0.4f));
 			if (t == 0)
@@ -158,9 +158,44 @@ int main()
 				};
 
 				std::cout << "rendering triangle 3 ... \n";
-				Point3 ps[] = { { -1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f } };
+				Point3 ps[] = { { -1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f } }; //  1 2 3
+				//Point3 ps[] = { { -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } }; // 1 3 2
+				//Point3 ps[] = { { 1.0f, 1.0f, 0.0f },{ -1.0f, -1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f } }; // 2 1 3
+				//Point3 ps[] = { { 1.0f, 1.0f, 0.0f },{ 1.0f, -1.0f, 0.0f },{ -1.0f, -1.0f, 0.0f } }; // 2 3 1
+				//Point3 ps[] = { { 1.0f, -1.0f, 0.0f }, { -1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } }; // 3 1 2
+				//Point3 ps[] = { { 1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },{ -1.0f, -1.0f, 0.0f }}; // 3 2 1
 				//{ -1.0f, -1.0f, 0.0f }, { 0.0f, 0.375f, 0.0f }, { 1.0f, -1.0f, 0.0f },
 				//{ -1.0f, -1.0f, 0.0f }, { 0.0f, 0.375f, 0.0f }, { 1.0f, -1.0f, 0.0f }
+				Point3 tc[] = { { 0.0f, 0.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f } };
+				myApi.setVertexBuffer((Point3*)ps, 3);
+				myApi.setNBuffer((Point3*)tc, 1);
+				myApi.setVertexShader(v);
+				myApi.setPixelShader(p);
+				myApi.Draw(3, 0);
+			}
+			else if (t == 4)
+			{
+				auto v = [](ShaderIO& i)
+				{
+					Matrix4x4 m;
+					m.setScale(0.5f, 0.5f, 0.5f);
+					//i.data[0] = m * i.data[0];
+				};
+
+				auto p = [&](int x, int y, ShaderIO& p, PSOutput& out)
+				{
+					//Point4(0.5f, 0.5f, 0.0f, 0)
+					out.colorBuffer = myApi.sampleTexture(Point2(p.data[2].x, p.data[2].y));// *std::max(0.0f, dot(p.data[1] * -1.0f, Point4(-0.5, -0.5, 0.5, 0.0f))) + Point4(0.08f, 0.08f, 0.08f, 0);
+				};
+
+				std::cout << "rendering triangle 4 ... \n";
+				//Point3 ps[] = { { -1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } }; //  1 2 3
+				//Point3 ps[] = { { -1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f } }; //  1 3 2
+				//Point3 ps[] = { { -1.0f, 1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f }, { -1.0f, -1.0f, 0.0f } }; //  2 3 1
+				//Point3 ps[] = { { -1.0f, 1.0f, 0.0f } ,{ -1.0f, -1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f } }; //  2 1 3
+				//Point3 ps[] = { { 1.0f, 1.0f, 0.0f }, { -1.0f, 1.0f, 0.0f },{ -1.0f, -1.0f, 0.0f } }; //  3 2 1
+				Point3 ps[] = { { 1.0f, 1.0f, 0.0f },{ -1.0f, -1.0f, 0.0f },{ -1.0f, 1.0f, 0.0f } }; //  3 1 2
+
 				Point3 tc[] = { { 0.0f, 0.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f } };
 				myApi.setVertexBuffer((Point3*)ps, 3);
 				myApi.setNBuffer((Point3*)tc, 1);
@@ -185,7 +220,7 @@ int main()
 				std::cout << "rendering full screen quad ... \n";
 				Point3 ps[] = { { -1.0f + 1.0f/1000.0f, -1.0f + 1.0f / 1000.0f, 0.0f },{ -1.0f + 1.0f / 1000.0f, 1.0f - 1.0f / 1000.0f, 0.0f },{ 1.0f - 1.0f / 1000.0f, 1.0f - 1.0f / 1000.0f, 0.0f },{ 1.0f- 1.0f / 1000.0f, -1.0f+ 1.0f / 1000.0f, 0.0f } };
 				Point3 tc[] = { { 0.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f } };
-				unsigned int in[] = { 0,1,2, 0, 2, 3 };
+				unsigned int in[] = { 0,2,1, 0, 2, 3 };
 				myApi.setVertexBuffer((Point3*)ps, 4);
 				myApi.setNBuffer((Point3*)tc, 1);
 				myApi.setIndexBuffer(in, 6);

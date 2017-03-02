@@ -11,10 +11,10 @@ namespace gapi
 		m_sampleTests = g_numSamples;
 	//	float maskX[] = { -0.4f, 0.05f, 0.4f, -0.05f };
 	//	float maskY[] = { 0.05f, 0.4f, -0.05f, -0.4f };
-	//	float maskX[] = { 0.0f, 0.0f, 0.5f, 0.0f };
-	//	float maskY[] = { 0.0f, 0.5f, 0.0f, -0.5f };
 		float maskX[] = { -0.5f, -0.5f, 0.5f, 0.5f };
 		float maskY[] = { -0.5f, 0.5f, 0.5f, -0.5f };
+	//	float maskX[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+	//	float maskY[] = { 0.0f, 1.0f, 1.0f, 0.0f };
 		for (int i = 0; i < m_sampleTests; i++)
 		{
 			m_sampleMask[i].x = maskX[i];

@@ -10,16 +10,23 @@ namespace gapi
 			float dx = X2 - X1;
 			float dy = Y2 - Y1;
 			return ((x - X1)* dy - (y - Y1) * dx);
+		}
+	}
 
-		}
-		bool onRight(float x, float y, float X1, float Y1, float X2, float Y2)
+	bool ScanLineRasterizer::onRight(float x, float y, float X1, float Y1, float X2, float Y2)
+	{
+		float res = edgeFunc(x, y, X1, Y1, X2, Y2);
+		res = m_ccw ? res * -1.0f : res;
+		if (res == -0.0f)
 		{
-			if (edgeFunc(x, y, X1, Y1, X2, Y2) >= 0.0f)
-			{
-				return true;
-			}
-			return false;
+			res = 0.0f;
 		}
+
+		if ( res >= 0)
+		{
+			return true;
+		}
+		return false;
 	}
 
 	ScanLineRasterizer::ScanLineRasterizer(Pipeline& pipeline)
@@ -39,10 +46,17 @@ namespace gapi
 		convertFromNDC(m_screenTriangle.p3, *m_vertexData3);
 
 		m_screenTriangleO = m_screenTriangle;
+
+		m_ccw = ((m_screenTriangleO.p2.realX - m_screenTriangleO.p1.realX)*(m_screenTriangleO.p3.realY - m_screenTriangleO.p1.realY) - (m_screenTriangleO.p3.realX - m_screenTriangleO.p1.realX)*(m_screenTriangleO.p2.realY - m_screenTriangleO.p1.realY)) >= 0;
+		m_area = edgeFunc(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
 	}
 
 	void ScanLineRasterizer::rasterize()
 	{
+		if (m_area == 0.0f)
+		{
+			return;
+		}
 		// from: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
 		if (m_screenTriangle.p1.y < m_screenTriangle.p2.y)
 		{
@@ -56,7 +70,6 @@ namespace gapi
 		{
 			std::swap(m_screenTriangle.p1, m_screenTriangle.p2);
 		}
-
 		if (m_screenTriangle.p2.y == m_screenTriangle.p3.y)
 		{
 			rasterizeTriangleBottom(m_screenTriangle);
@@ -76,23 +89,15 @@ namespace gapi
 			
 			m_screenTriangleBottom = m_screenTriangle;
 			m_screenTriangleBottom.p3 = newPoint;
-			if (m_screenTriangleBottom.p2.realX > m_screenTriangleBottom.p3.realX)
-			{
-				std::swap(m_screenTriangleBottom.p3, m_screenTriangleBottom.p2);
-			}
 
 			rasterizeTriangleBottom(m_screenTriangleBottom);
 			m_screenTriangleTop = m_screenTriangle;
 			m_screenTriangleTop.p1 = m_screenTriangle.p2;
 			m_screenTriangleTop.p2 = newPoint;
-			if (m_screenTriangleTop.p1.realX > m_screenTriangleTop.p2.realX)
-			{
-				std::swap(m_screenTriangleTop.p1, m_screenTriangleTop.p2);
-			}
 			rasterizeTriangleTop(m_screenTriangleTop);
 		}
 	}
-
+	static int gap = 0;
 	//	 1
 	//  / \
 	// 2---3
@@ -103,9 +108,7 @@ namespace gapi
 
 		float curX = s.p1.x;
 		float curX2 = s.p1.x;
-		//for (int slY = std::floorf(s.p1.realY); slY >= std::ceilf(s.p2.realY); slY--)
-		//for (int slY = std::lroundf(s.p1.realY); slY >= std::lroundf(s.p2.realY); slY--)
-		for (int slY = s.p1.y; slY >= s.p2.y; slY--)
+		for (int slY = s.p1.y- gap; slY >= s.p2.y- gap; slY--)
 		{
 			rasterizeStraightLine(s, std::lroundf(curX), std::lroundf(curX2), slY, true);
 			curX += invSlope1;
@@ -124,9 +127,7 @@ namespace gapi
 		float curX = s.p3.x;
 		float curX2 = s.p3.x;
 
-		//for (int slY = std::floorf(s.p3.realY); slY <= std::ceilf(s.p1.realY); slY++)
-		//for (int slY = std::lroundf(s.p3.realY); slY <= std::lroundf(s.p1.realY); slY++)
-		for (int slY = s.p3.y; slY <= s.p1.y; slY++)
+		for (int slY = s.p3.y- gap; slY <= s.p1.y+ gap; slY++)
 		{
 			rasterizeStraightLine(s, std::lroundf(curX), std::lroundf(curX2), slY, false);
 			curX -= invSlope1;
@@ -140,35 +141,34 @@ namespace gapi
 		{
 			std::swap(x1, x2);
 		}
-		//for (int i = std::lroundf(x1); i <= std::lroundf(x2); i ++)
-		for (int i = x1; i <= x2; i++)
+
+		for (int i = x1-5; i <= x2+5; i++)
 		{
-			if (i < 0 || i > m_w || y < 0 || y > m_h)
-			{
-				continue;
-			}
+			//	if (i < 0 || i > m_w || y < 0 || y > m_h)
+			//	{
+			//		continue;
+			//	}
 
 			P p;
-			p.x = i;// lroundf(i);
+			p.x = i;
 			p.y = y;
 			p.realX = i;
 			p.realY = y;
 
-			coverageTest(p, s, bottom); // TODO:!!!
+			coverageTest(p, m_screenTriangleO, bottom);
+
 			if (p.needShade || 0)
 			{
 				int screenX = i;
 				int screenY = y;
 				
-				float area = edgeFunc(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
+				float u = edgeFunc(screenX, screenY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
+				float v = edgeFunc(screenX, screenY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY);
+				float w = edgeFunc(screenX, screenY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY);
 
-				float u = edgeFunc(p.realX, p.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
-				float v = edgeFunc(p.realX, p.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY);
-				float w = edgeFunc(p.realX, p.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY);
-
-				u /= area; // barycentric u
-				v /= area; // barycentric v
-				w /= area; // barycentric w
+				u /= m_area; // barycentric u
+				v /= m_area; // barycentric v
+				w /= m_area; // barycentric w
 
 				PSOutput out;
 				m_pipeLine.invokePixelShader(screenX, screenY, m_vertexData1, m_vertexData2, m_vertexData3, u, v, w, out);
@@ -177,24 +177,6 @@ namespace gapi
 				{
 					//m_pipeLine.blener(screenX, screenY, out, p.numSamplesCovered);
 					m_pipeLine.mergeSample(i, y, p, out);
-				}
-			}
-			else
-			{
-				// DEBUG
-				static	int x = 0;
-				x++;
-				coverageTest(p, s, bottom);
-				PSOutput out;
-				out.colorBuffer.x = 1.0f;
-				out.colorBuffer.y = bottom ? 0.0f : 1.0f;
-				out.colorBuffer.z = 0.0f;
-				out.outZ = 0;
-
-				if (m_pipeLine.depthTest(i, y, out.outZ))
-				{
-					//m_pipeLine.blener(i, y, out, p.numSamplesCovered);
-				//	m_pipeLine.mergeSample(i, y, )
 				}
 			}
 		}
@@ -207,32 +189,19 @@ namespace gapi
 		{
 			screenPoint.samplesCovered[i] = false;
 			bool test = true;
-			/*if (bottom)
-			{
-				test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p2.realX, s.p2.realY, s.p1.realX, s.p1.realY); // P2P1
-				test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p1.realX, s.p1.realY, s.p3.realX, s.p3.realY); // P1P3
-				test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p3.realX, s.p3.realY, s.p2.realX, s.p2.realY); // P3P2
-			}								 				  
-			else							 				  
-			{								 				  
-				test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p1.realX, s.p1.realY, s.p2.realX, s.p2.realY); // P1P2
-				test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY); // P2P3
-				test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p3.realX, s.p3.realY, s.p1.realX, s.p1.realY); // P3P1
-			}*/
-			test &= onRight(screenPoint.x +0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY); // P1P2
-			test &= onRight(screenPoint.x +0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY); // P2P3
-			test &= onRight(screenPoint.x +0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY); // P3P1
+			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p1.realX, s.p1.realY, s.p2.realX, s.p2.realY); // P1P2
+			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY); // P2P3
+			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p3.realX, s.p3.realY, s.p1.realX, s.p1.realY); // P3P1
+			
 			if (test)
 			{
-				float area = edgeFunc(m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
+				float u = edgeFunc(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY);
+				float v = edgeFunc(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p3.realX, s.p3.realY, s.p1.realX, s.p1.realY);
+				float w = edgeFunc(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p1.realX, s.p1.realY, s.p2.realX, s.p2.realY);
 
-				float u = edgeFunc(screenPoint.x + 0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
-				float v = edgeFunc(screenPoint.x + 0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY);
-				float w = edgeFunc(screenPoint.x + 0.5f + mask[i].x, screenPoint.y + 0.5f + mask[i].y, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY);
-
-				u /= area; // barycentric u
-				v /= area; // barycentric v
-				w /= area; // barycentric w
+				u /= m_area; // barycentric u
+				v /= m_area; // barycentric v
+				w /= m_area; // barycentric w
 
 				float z = getFromBarycentric2(m_vertexData1->data[0].z, m_vertexData2->data[0].z, m_vertexData3->data[0].z, u, v, w);
 
@@ -248,21 +217,19 @@ namespace gapi
 
 	void ScanLineRasterizer::convertFromNDC(P& screenPoint, ShaderIO & vertexData)
 	{
-		screenPoint.realX = ((vertexData.data[0].x + 1.0f) / 2.0f * ((float)m_w)); // -1.0f
+		screenPoint.realX = ((vertexData.data[0].x + 1.0f) / 2.0f * ((float)m_w )); // -1.0f
 		screenPoint.x = std::lroundf(screenPoint.realX);
-		if (screenPoint.x >= m_w)
-		{
-			screenPoint.x = m_w - 1;
-		}
-		screenPoint.fracX = screenPoint.realX - (float)screenPoint.x;
-		
-		screenPoint.realY = ((vertexData.data[0].y + 1.0f) / 2.0f * ((float)m_h)); // -1.0f
+		//if (screenPoint.x >= m_w)
+		//{
+		//	screenPoint.x = m_w - 1;
+		//}
+
+		screenPoint.realY = ((vertexData.data[0].y + 1.0f) / 2.0f * ((float)m_h )); // -1.0f
 		screenPoint.y = std::lroundf(screenPoint.realY);
-		if (screenPoint.y >= m_h)
-		{
-			screenPoint.y = m_h - 1;
-		}
-		screenPoint.fracY = screenPoint.realY - (float)screenPoint.y;
+		//if (screenPoint.y >= m_h)
+		//{
+		//	screenPoint.y = m_h - 1;
+		//}
 	}
 
 }

@@ -305,8 +305,6 @@ namespace gapi
 		P(int x = 0, int y = 0)
 			:x(x)
 			, y(y)
-			, fracX(0.0f)
-			, fracY(0.0f)
 			, needShade(false)
 			, numSamplesCovered(0)
 		{
@@ -322,7 +320,6 @@ namespace gapi
 		}
 		int numSamplesCovered;
 		int x, y;
-		float fracX, fracY;
 		float realX, realY;
 		bool needShade;
 		bool samplesCovered[g_numSamples];

@@ -30,6 +30,7 @@ namespace gapi
 		void rasterizeStraightLine(ScreenTriangle& s, int x1, int x2, int y, bool bottom);
 		void coverageTest(P& p, ScreenTriangle& s, bool bottom);
 		void convertFromNDC(P& p, ShaderIO& vertexData);
+		bool onRight(float x, float y, float X1, float Y1, float X2, float Y2);
 
 	private:
 		ShaderIO* m_vertexData1;
@@ -41,5 +42,7 @@ namespace gapi
 		ScreenTriangle m_screenTriangleO;
 		ScreenTriangle m_screenTriangleBottom;
 		ScreenTriangle m_screenTriangleTop;
+		bool m_ccw;
+		float m_area;
 	};
 }
