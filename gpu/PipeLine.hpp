@@ -35,5 +35,6 @@ namespace gapi
 		Point2 m_sampleMask[64];
 		vertexShaderType m_vertexShader;
 		pixelShaderType m_pixelShader;
+		bool m_perspectiveCorrection;
 	};
 }

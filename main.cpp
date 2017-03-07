@@ -10,7 +10,6 @@ using namespace gapi;
 
 int main()
 {
-
 	GraphicsAPI myApi(1700, 1700, GraphicsAPI::Y_AXIS_TOP);
 	myApi.clear(Pixel(0.4f, 0.5f, 0.4f));
 

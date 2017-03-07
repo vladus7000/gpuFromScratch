@@ -4,7 +4,7 @@
 
 namespace gapi
 {
-	const int g_numSamples = 4;
+	const int g_numSamples = 1;
 	struct Pixel
 	{
 		Pixel(float r = 0.0f, float g = 0.0f, float b = 0.0f)
@@ -150,6 +150,15 @@ namespace gapi
 			z /= n;
 			w /= n;
 			return *this;
+		}
+		Point4 operator/(float n)
+		{
+			Point4 p(*this);
+			p.x /= n;
+			p.y /= n;
+			p.z /= n;
+			p.w /= n;
+			return p;
 		}
 
 		Point4& operator*=(float n)

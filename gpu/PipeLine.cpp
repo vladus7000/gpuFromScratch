@@ -7,6 +7,7 @@ namespace gapi
 {
 	Pipeline::Pipeline(GraphicsAPI& gapi)
 		: m_gapi(gapi)
+		, m_perspectiveCorrection(!true)
 	{
 		m_sampleTests = g_numSamples;
 	//	float maskX[] = { -0.4f, 0.05f, 0.4f, -0.05f };
@@ -20,8 +21,12 @@ namespace gapi
 			m_sampleMask[i].x = maskX[i];
 			m_sampleMask[i].y = maskY[i];
 		}
-	//	Point2 p;
-	//	setSampleMask(1, &p);
+
+		if (g_numSamples == 1)
+		{
+			Point2 p;
+			setSampleMask(1, &p);
+		}
 	}
 
 	void Pipeline::invokePixelShader(int x, int y, ShaderIO* v1, ShaderIO* v2, ShaderIO* v3, float u, float v, float w, PSOutput& out)
@@ -29,11 +34,34 @@ namespace gapi
 		if (m_pixelShader)
 		{
 			ShaderIO psInput;
-			for (int i = 0; i < ShaderIO::dataCount; i++)
+			const float epsilon = FLT_MIN;//1e-10;
+
+			const float z1 = v1->data[0].z + epsilon;
+			const float z2 = v2->data[0].z + epsilon;
+			const float z3 = v3->data[0].z + epsilon;
+
+			const float invz1 = 1.0f / z1;
+			const float invz2 = 1.0f / z2;
+			const float invz3 = 1.0f / z3;
+
+			//const float invZ = (1.0f / z1) * u + (1.0f / z2) * v + (1.0f / z3) * w;
+			const float z = 1.0f / (invz1 * u + invz2 * v + invz3 * w);
+
+			for (int i = 1; i < ShaderIO::dataCount; i++)
 			{
-				psInput.data[i] = getFromBarycentric2(v1->data[i], v2->data[i], v3->data[i], u, v, w);
+				if (m_perspectiveCorrection)
+				{
+					psInput.data[i] = getFromBarycentric2(v1->data[i] / z1, v2->data[i] / z2, v3->data[i] / z3, u, v, w);
+					psInput.data[i] *= z;
+				}
+				else
+				{
+					psInput.data[i] = getFromBarycentric2(v1->data[i], v2->data[i], v3->data[i], u, v, w);
+				}
 			}
-			out.outZ = psInput.data[0].z;
+
+			out.outZ = z;
+
 			m_pixelShader(x, y, psInput, out);
 		}
 	}

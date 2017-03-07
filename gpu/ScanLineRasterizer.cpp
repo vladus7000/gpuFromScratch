@@ -161,10 +161,11 @@ namespace gapi
 			{
 				int screenX = i;
 				int screenY = y;
-				
-				float u = edgeFunc(screenX, screenY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
-				float v = edgeFunc(screenX, screenY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY);
-				float w = edgeFunc(screenX, screenY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY);
+
+				const float center = 0.5f;
+				float u = edgeFunc(screenX + center, screenY + center, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY);
+				float v = edgeFunc(screenX + center, screenY + center, m_screenTriangleO.p3.realX, m_screenTriangleO.p3.realY, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY);
+				float w = edgeFunc(screenX + center, screenY + center, m_screenTriangleO.p1.realX, m_screenTriangleO.p1.realY, m_screenTriangleO.p2.realX, m_screenTriangleO.p2.realY);
 
 				u /= m_area; // barycentric u
 				v /= m_area; // barycentric v
@@ -189,10 +190,11 @@ namespace gapi
 		{
 			screenPoint.samplesCovered[i] = false;
 			bool test = true;
-			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p1.realX, s.p1.realY, s.p2.realX, s.p2.realY); // P1P2
-			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY); // P2P3
-			test &= onRight(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p3.realX, s.p3.realY, s.p1.realX, s.p1.realY); // P3P1
-			
+			const float center = 0.5f;
+			test &= onRight(screenPoint.x + mask[i].x + center, screenPoint.y + mask[i].y + center, s.p1.realX, s.p1.realY, s.p2.realX, s.p2.realY); // P1P2
+			test &= onRight(screenPoint.x + mask[i].x + center, screenPoint.y + mask[i].y + center, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY); // P2P3
+			test &= onRight(screenPoint.x + mask[i].x + center, screenPoint.y + mask[i].y + center, s.p3.realX, s.p3.realY, s.p1.realX, s.p1.realY); // P3P1
+
 			if (test)
 			{
 				float u = edgeFunc(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY);
@@ -203,7 +205,12 @@ namespace gapi
 				v /= m_area; // barycentric v
 				w /= m_area; // barycentric w
 
-				float z = getFromBarycentric2(m_vertexData1->data[0].z, m_vertexData2->data[0].z, m_vertexData3->data[0].z, u, v, w);
+				const float epsilon = FLT_MIN;//1e-10;
+				const float z1 = 1.0f / (m_vertexData1->data[0].z + epsilon);
+				const float z2 = 1.0f / (m_vertexData2->data[0].z + epsilon);
+				const float z3 = 1.0f / (m_vertexData3->data[0].z + epsilon);
+
+				const float z = 1.0f / (z1 * u + z2 * v + z3 * w);
 
 				if (m_pipeLine.sampleDepthTest(screenPoint.x, screenPoint.y, i, z))
 				{
@@ -219,17 +226,9 @@ namespace gapi
 	{
 		screenPoint.realX = ((vertexData.data[0].x + 1.0f) / 2.0f * ((float)m_w )); // -1.0f
 		screenPoint.x = std::lroundf(screenPoint.realX);
-		//if (screenPoint.x >= m_w)
-		//{
-		//	screenPoint.x = m_w - 1;
-		//}
 
 		screenPoint.realY = ((vertexData.data[0].y + 1.0f) / 2.0f * ((float)m_h )); // -1.0f
 		screenPoint.y = std::lroundf(screenPoint.realY);
-		//if (screenPoint.y >= m_h)
-		//{
-		//	screenPoint.y = m_h - 1;
-		//}
 	}
 
 }
