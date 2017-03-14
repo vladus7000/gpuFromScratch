@@ -30,6 +30,9 @@
     <ClCompile Include="gpu\ScanLineRasterizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="gpu\TiledRasterizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BMPWriter.h">
@@ -51,6 +54,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gpu\ShaderUtils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gpu\TiledRasterizer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

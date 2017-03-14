@@ -10,7 +10,7 @@ using namespace gapi;
 
 int main()
 {
-	GraphicsAPI myApi(1700, 1700, GraphicsAPI::Y_AXIS_TOP);
+	GraphicsAPI myApi(800, 800, GraphicsAPI::Y_AXIS_TOP);
 	myApi.clear(Pixel(0.4f, 0.5f, 0.4f));
 
 	//myApi.loadPicture("Preview.jpg");
@@ -72,14 +72,23 @@ int main()
 				auto v = [](ShaderIO& i)
 				{
 					Matrix4x4 m;
-					m.setScale(0.5f, 0.5f, 0.5f);
+					m.setIdentity();
+					const float angle = 45.0f / 180.0f * 3.1415926f;
+					m(0, 0) = cosf(angle);
+					m(0, 2) = sinf(angle);
+					m(2, 0) = -sinf(angle);
+					m(2, 2) = cosf(angle);
 					//i.data[0] = m * i.data[0];
+					//i.data[0].z = 0.0;
 				};
 
 				auto p = [&](int x, int y, ShaderIO& p, PSOutput& out)
 				{
 					//Point4(0.5f, 0.5f, 0.0f, 0)
-					out.colorBuffer = myApi.sampleTexture(Point2(p.data[2].x, p.data[2].y)) * std::max(0.0f, dot(p.data[1] * -1.0f, Point4(-0.5, -0.5, 0.5, 0.0f))) + Point4(0.08f, 0.08f, 0.08f, 0);
+					const int M = 10;
+					float c = (fmod(p.data[2].x / 2.0f * M, 1.0) > 0.5) ^ (fmod(p.data[2].y / 2.0f * M, 1.0) < 0.5);
+					//out.colorBuffer = Point4(1.0, 1.0, 1.0, 1.0) * c;
+					out.colorBuffer = myApi.sampleTexture(Point2(p.data[2].x / 2.0f, p.data[2].y / 2.0f)) * std::max(0.0f, dot(p.data[1] * -1.0f, Point4(-0.5, -0.5, 0.5, 0.0f))) + Point4(0.08f, 0.08f, 0.08f, 0);
 				};
 
 				std::cout << "rendering teapot ... \n";
@@ -96,10 +105,22 @@ int main()
 			else if (t == 1)
 			{
 				auto v = [](ShaderIO& i)
-				{
+				{	
+					//scale
+					Matrix4x4 m1;
+					m1.setIdentity();
+					m1.setScale(0.5f, 0.5f, 0.5f);
+					i.data[0] = m1 * i.data[0];
+
+					// rotate Y
 					Matrix4x4 m;
-					m.setScale(0.5f, 0.5f, 0.5f);
-					//i.data[0] = m * i.data[0];
+					m.setIdentity();
+					const float angle = 90.0f / 180.0f * 3.1415926f;
+					m(0, 0) = cosf(angle);
+					m(0, 2) = sinf(angle);
+					m(2, 0) = -sinf(angle);
+					m(2, 2) = cosf(angle);
+					i.data[0] = m * i.data[0];
 				};
 
 				auto p = [&](int x, int y, ShaderIO& p, PSOutput& out)
@@ -207,25 +228,35 @@ int main()
 				auto v = [](ShaderIO& i)
 				{
 					Matrix4x4 m;
-					m.setScale(0.5f, 0.5f, 0.5f);
-					//i.data[0] = m * i.data[0];
+					m.setIdentity();
+					const double angle = 0.0 / 180.0 * 3.14159265358979323846;
+					m(0, 0) = std::cos(angle);
+					m(0, 2) = std::sin(angle);
+					m(2, 0) = -std::sin(angle);
+					m(2, 2) = std::cos(angle);
+					i.data[0] = m * i.data[0];
+					i.data[0].w = i.data[0].z * 10.0f;
 				};
 
 				auto p = [&](int x, int y, ShaderIO& p, PSOutput& out)
 				{
 					//Point4(0.5f, 0.5f, 0.0f, 0)
-					out.colorBuffer = myApi.sampleTexture(Point2(p.data[2].x, p.data[2].y));// *std::max(0.0f, dot(p.data[1] * -1.0f, Point4(-0.5, -0.5, 0.5, 0.0f))) + Point4(0.08f, 0.08f, 0.08f, 0);
+					const int M = 10;
+					float c = (fmod(p.data[2].x * M, 1.0) > 0.5) ^ (fmod(p.data[2].y * M, 1.0) < 0.5);
+					out.colorBuffer = Point4(1.0, 1.0, 1.0, 1.0) * c;//myApi.sampleTexture(Point2(p.data[2].x, p.data[2].y));// *std::max(0.0f, dot(p.data[1] * -1.0f, Point4(-0.5, -0.5, 0.5, 0.0f))) + Point4(0.08f, 0.08f, 0.08f, 0);
 				};
 				std::cout << "rendering full screen quad ... \n";
-				Point3 ps[] = { { -1.0f + 1.0f/1000.0f, -1.0f + 1.0f / 1000.0f, 0.0f },{ -1.0f + 1.0f / 1000.0f, 1.0f - 1.0f / 1000.0f, 0.0f },{ 1.0f - 1.0f / 1000.0f, 1.0f - 1.0f / 1000.0f, 0.0f },{ 1.0f- 1.0f / 1000.0f, -1.0f+ 1.0f / 1000.0f, 0.0f } };
+				//Point3 ps[] = { { -1.0f + 1.0f/1000.0f, -1.0f + 1.0f / 1000.0f, 0.0f },{ -1.0f + 1.0f / 1000.0f, 1.0f - 1.0f / 1000.0f, 0.0f },{ 1.0f - 1.0f / 1000.0f, 1.0f - 1.0f / 1000.0f, 0.0f },{ 1.0f- 1.0f / 1000.0f, -1.0f+ 1.0f / 1000.0f, 0.0f } };
+				Point3 ps[] = { { -0.7f, -1.0f, 0.1f },{ -0.7f, 1.0f, 0.1f },{ 0.7f, 1.0f, 0.8f },{ 1.0f, -1.0f, 0.5f } };
+
 				Point3 tc[] = { { 0.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 1.0f, 1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f } };
-				unsigned int in[] = { 0,2,1, 0, 2, 3 };
+				unsigned int in[] = { 0,1,2, 0, 2, 3 };
 				myApi.setVertexBuffer((Point3*)ps, 4);
 				myApi.setNBuffer((Point3*)tc, 1);
 				myApi.setIndexBuffer(in, 6);
 				myApi.setVertexShader(v);
 				myApi.setPixelShader(p);
-				myApi.DrawIndexed(6, 0, 0);
+				myApi.DrawIndexed(3, 0, 0);
 
 			}
 			myApi.resolveFB();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string.h> //memset
+#include <algorithm>
 
 namespace gapi
 {
@@ -209,6 +210,11 @@ namespace gapi
 			return *this;
 		}
 
+		Point3 xyz()
+		{
+			return Point3(x, y, z);
+		}
+
 		float& operator[](int i)
 		{
 			switch (i)
@@ -414,5 +420,12 @@ namespace gapi
 		w = (d00 * d21 - d01 * d20) / denom;
 
 		u = 1.0f - v - w;
+	}
+
+	inline double edgeFunc(float x, float y, float X1, float Y1, float X2, float Y2)
+	{
+		double dx = X2 - X1;
+		double dy = Y2 - Y1;
+		return ((x - X1)* dy - (y - Y1) * dx);
 	}
 }

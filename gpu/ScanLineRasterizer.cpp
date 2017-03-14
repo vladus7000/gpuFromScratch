@@ -1,18 +1,8 @@
 #include "ScanLineRasterizer.hpp"
-#include <algorithm>
 #include <iostream>
+
 namespace gapi
 {
-	namespace
-	{
-		float edgeFunc(float x, float y, float X1, float Y1, float X2, float Y2)
-		{
-			float dx = X2 - X1;
-			float dy = Y2 - Y1;
-			return ((x - X1)* dy - (y - Y1) * dx);
-		}
-	}
-
 	bool ScanLineRasterizer::onRight(float x, float y, float X1, float Y1, float X2, float Y2)
 	{
 		float res = edgeFunc(x, y, X1, Y1, X2, Y2);
@@ -41,9 +31,9 @@ namespace gapi
 		m_w = w;
 		m_h = h;
 
-		convertFromNDC(m_screenTriangle.p1, *m_vertexData1);
-		convertFromNDC(m_screenTriangle.p2, *m_vertexData2);
-		convertFromNDC(m_screenTriangle.p3, *m_vertexData3);
+		convertFromNDC(m_screenTriangle.p1, *m_vertexData1, w, h);
+		convertFromNDC(m_screenTriangle.p2, *m_vertexData2, w, h);
+		convertFromNDC(m_screenTriangle.p3, *m_vertexData3, w, h);
 
 		m_screenTriangleO = m_screenTriangle;
 
@@ -197,20 +187,26 @@ namespace gapi
 
 			if (test)
 			{
-				float u = edgeFunc(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY);
-				float v = edgeFunc(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p3.realX, s.p3.realY, s.p1.realX, s.p1.realY);
-				float w = edgeFunc(screenPoint.x + mask[i].x, screenPoint.y + mask[i].y, s.p1.realX, s.p1.realY, s.p2.realX, s.p2.realY);
+				float u = edgeFunc(screenPoint.x + mask[i].x + center, screenPoint.y + mask[i].y + center, s.p2.realX, s.p2.realY, s.p3.realX, s.p3.realY);
+				float v = edgeFunc(screenPoint.x + mask[i].x + center, screenPoint.y + mask[i].y + center, s.p3.realX, s.p3.realY, s.p1.realX, s.p1.realY);
+				float w = edgeFunc(screenPoint.x + mask[i].x + center, screenPoint.y + mask[i].y + center, s.p1.realX, s.p1.realY, s.p2.realX, s.p2.realY);
 
 				u /= m_area; // barycentric u
 				v /= m_area; // barycentric v
 				w /= m_area; // barycentric w
 
-				const float epsilon = FLT_MIN;//1e-10;
-				const float z1 = 1.0f / (m_vertexData1->data[0].z + epsilon);
-				const float z2 = 1.0f / (m_vertexData2->data[0].z + epsilon);
-				const float z3 = 1.0f / (m_vertexData3->data[0].z + epsilon);
+				const float epsilon = 0.0f;// 1e-10;
+				const float z1 = (m_vertexData1->data[0].z + epsilon);
+				const float z2 = (m_vertexData2->data[0].z + epsilon);
+				const float z3 = (m_vertexData3->data[0].z + epsilon);
 
-				const float z = 1.0f / (z1 * u + z2 * v + z3 * w);
+				//const float z11 = 1.0f / (m_vertexData1->data[0].z + epsilon);
+				//const float z21 = 1.0f / (m_vertexData2->data[0].z + epsilon);
+				//const float z31 = 1.0f / (m_vertexData3->data[0].z + epsilon);
+
+				const float invZ = u * z1 + v * z2 + w*z3;
+				const float z = invZ;
+				//const float z = 1.0f / ((1.0f / z1) * u + (1.0f / z2) * v + (1.0f / z3) * w);
 
 				if (m_pipeLine.sampleDepthTest(screenPoint.x, screenPoint.y, i, z))
 				{
@@ -220,15 +216,6 @@ namespace gapi
 				}
 			}
 		}	
-	}
-
-	void ScanLineRasterizer::convertFromNDC(P& screenPoint, ShaderIO & vertexData)
-	{
-		screenPoint.realX = ((vertexData.data[0].x + 1.0f) / 2.0f * ((float)m_w )); // -1.0f
-		screenPoint.x = std::lroundf(screenPoint.realX);
-
-		screenPoint.realY = ((vertexData.data[0].y + 1.0f) / 2.0f * ((float)m_h )); // -1.0f
-		screenPoint.y = std::lroundf(screenPoint.realY);
 	}
 
 }

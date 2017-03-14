@@ -1,6 +1,7 @@
 #pragma once
 #include "ShaderUtils.hpp"
 #include <functional>
+#include <D3DX11.h>
 
 namespace gapi
 {
@@ -29,6 +30,11 @@ namespace gapi
 		const Point2* getSampleMask() const { return m_sampleMask; }
 
 		void setSampleMask(int count, Point2* mask);
+
+		const D3D11_RASTERIZER_DESC& RSGetState() const { return m_rasterizerDesc; };
+		void RSSetState(const D3D11_RASTERIZER_DESC& desc) { m_rasterizerDesc = desc; }
+	private:
+		void defaultSettings();
 	private:
 		GraphicsAPI& m_gapi;
 		int m_sampleTests;
@@ -36,5 +42,7 @@ namespace gapi
 		vertexShaderType m_vertexShader;
 		pixelShaderType m_pixelShader;
 		bool m_perspectiveCorrection;
+
+		D3D11_RASTERIZER_DESC m_rasterizerDesc;
 	};
 }

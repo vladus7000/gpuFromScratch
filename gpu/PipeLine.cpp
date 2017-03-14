@@ -7,13 +7,13 @@ namespace gapi
 {
 	Pipeline::Pipeline(GraphicsAPI& gapi)
 		: m_gapi(gapi)
-		, m_perspectiveCorrection(!true)
+		, m_perspectiveCorrection(true)
 	{
 		m_sampleTests = g_numSamples;
 	//	float maskX[] = { -0.4f, 0.05f, 0.4f, -0.05f };
 	//	float maskY[] = { 0.05f, 0.4f, -0.05f, -0.4f };
-		float maskX[] = { -0.5f, -0.5f, 0.5f, 0.5f };
-		float maskY[] = { -0.5f, 0.5f, 0.5f, -0.5f };
+		float maskX[] = { -0.25f, -0.25f, 0.25f, 0.25f };
+		float maskY[] = { -0.25f, 0.25f, 0.25f, -0.25f };
 	//	float maskX[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	//	float maskY[] = { 0.0f, 1.0f, 1.0f, 0.0f };
 		for (int i = 0; i < m_sampleTests; i++)
@@ -27,32 +27,59 @@ namespace gapi
 			Point2 p;
 			setSampleMask(1, &p);
 		}
-	}
 
+
+		defaultSettings();
+	}
+	inline bool Compare(float A, float B)
+	{
+		float diff = A - B;
+		//return (diff < FLT_EPSILON) && (-diff < FLT_EPSILON);
+		return std::fabsf(A - B) < FLT_EPSILON;
+	}
 	void Pipeline::invokePixelShader(int x, int y, ShaderIO* v1, ShaderIO* v2, ShaderIO* v3, float u, float v, float w, PSOutput& out)
 	{
 		if (m_pixelShader)
 		{
 			ShaderIO psInput;
-			const float epsilon = FLT_MIN;//1e-10;
+		/*	const float epsilon = 1e-10;//FLT_MIN;
 
-			const float z1 = v1->data[0].z + epsilon;
-			const float z2 = v2->data[0].z + epsilon;
-			const float z3 = v3->data[0].z + epsilon;
+			const float z1g = v1->data[0].z + epsilon;
+			const float z2g = v2->data[0].z + epsilon;
+			const float z3g = v3->data[0].z + epsilon;
 
-			const float invz1 = 1.0f / z1;
-			const float invz2 = 1.0f / z2;
-			const float invz3 = 1.0f / z3;
+			const float invz1 = 1.0f / z1g;
+			const float invz2 = 1.0f / z2g;
+			const float invz3 = 1.0f / z3g;
 
 			//const float invZ = (1.0f / z1) * u + (1.0f / z2) * v + (1.0f / z3) * w;
-			const float z = 1.0f / (invz1 * u + invz2 * v + invz3 * w);
+			const float z11 = 1.0f / (invz1 * u + invz2 * v + invz3 * w);
+			
+			*/
+			//const double z1 = Compare(m_vertexData1->data[0].z, 0.0f) ? 1e-10 : 1.0 / (m_vertexData1->data[0].z);
+			//const double z2 = Compare(m_vertexData2->data[0].z, 0.0f) ? 1e-10 : 1.0 / (m_vertexData2->data[0].z);
+			//const double z3 = Compare(m_vertexData3->data[0].z, 0.0f) ? 1e-10 : 1.0 / (m_vertexData3->data[0].z);
+			const double z1 = Compare(v1->data[0].w, 0.0f) ? 1.0 / 1e-10 : 1.0 / (v1->data[0].w);
+			const double z2 = Compare(v2->data[0].w, 0.0f) ? 1.0 / 1e-10 : 1.0 / (v2->data[0].w);
+			const double z3 = Compare(v3->data[0].w, 0.0f) ? 1.0 / 1e-10 : 1.0 / (v3->data[0].w);
+
+			//const float z11 = 1.0f / (m_vertexData1->data[0].z + epsilon);
+			//const float z21 = 1.0f / (m_vertexData2->data[0].z + epsilon);
+			//const float z31 = 1.0f / (m_vertexData3->data[0].z + epsilon);
+
+			const double invW = (float)(u * z1 + v * z2 + w * z3);
+			double W = 1.0f / invW;// -epsilon;
 
 			for (int i = 1; i < ShaderIO::dataCount; i++)
 			{
 				if (m_perspectiveCorrection)
 				{
-					psInput.data[i] = getFromBarycentric2(v1->data[i] / z1, v2->data[i] / z2, v3->data[i] / z3, u, v, w);
-					psInput.data[i] *= z;
+					Point4 d1 = v1->data[i] * z1;
+					Point4 d2 = v2->data[i] * z2;
+					Point4 d3 = v3->data[i] * z3;
+
+					psInput.data[i] = getFromBarycentric2(d1, d2, d3, u, v, w);
+					psInput.data[i] *= W;
 				}
 				else
 				{
@@ -60,7 +87,7 @@ namespace gapi
 				}
 			}
 
-			out.outZ = z;
+			out.outZ = 1;//z
 
 			m_pixelShader(x, y, psInput, out);
 		}
@@ -115,5 +142,19 @@ namespace gapi
 			m_sampleMask[i] = mask[i];
 		}
 		m_sampleTests = count;
+	}
+
+	void Pipeline::defaultSettings()
+	{
+		m_rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+		m_rasterizerDesc.CullMode = D3D11_CULL_NONE;
+		m_rasterizerDesc.FrontCounterClockwise = false;
+		m_rasterizerDesc.DepthBias = false;
+		m_rasterizerDesc.DepthBiasClamp = 0;
+		m_rasterizerDesc.SlopeScaledDepthBias = 0;
+		m_rasterizerDesc.DepthClipEnable = true;
+		m_rasterizerDesc.ScissorEnable = false;
+		m_rasterizerDesc.MultisampleEnable = g_numSamples > 1;
+		m_rasterizerDesc.AntialiasedLineEnable = false;
 	}
 }

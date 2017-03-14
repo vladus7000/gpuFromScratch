@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "ScanLineRasterizer.hpp"
+#include "TiledRasterizer.hpp"
 
 namespace gapi
 {
@@ -418,7 +419,7 @@ void GraphicsAPI::setNBuffer(Point3* buffer, unsigned int n)
 
 bool GraphicsAPI::depthTest(int screenX, int screenY, float z)
 {
-	if (screenX < m_width && screenY < m_height && screenX >= 0 && screenY >= 0 && z <= 1.0f && z >= -1.0f)
+	if (screenX < m_width && screenY < m_height && screenX >= 0 && screenY >= 0 && z <= 1.0f && z >= 0.0f)
 	{
 		z *= -1.0f; // like in DX11
 		unsigned int y = screenY;
@@ -563,19 +564,24 @@ void GraphicsAPI::setSampleColor(unsigned int x, unsigned int y, unsigned int su
 		m_frameBuffer[_y * m_width + x].samples[subSample] = pixelColor;
 	}
 }
-
+inline bool Compare(float A, float B)
+{
+	float diff = A - B;
+	//return (diff < FLT_EPSILON) && (-diff < FLT_EPSILON);
+	return std::fabsf(A - B) < FLT_EPSILON;
+}
 bool GraphicsAPI::sampleDepthTest(int screenX, int screenY, int sample, float z)
 {
-	if (screenX < m_width && screenY < m_height && screenX >= 0 && screenY >= 0 && z <= 1.0f && z >= -1.0f)
+	if (screenX < m_width && screenY < m_height && screenX >= 0 && screenY >= 0 && z <= 1.0f && z >= 0.0f)
 	{
-		z *= -1.0f; // like in DX11
+		//z *= -1.0f; // like in DX11
 		unsigned int y = screenY;
 
 		if (m_flags & Y_AXIS_TOP)
 		{
 			y = (m_height - 1) - screenY;
 		}
-		if (z < m_frameBuffer[y * m_width + screenX].samplesZ[sample])
+		if (!Compare(z, m_frameBuffer[y * m_width + screenX].samplesZ[sample])&& z < m_frameBuffer[y * m_width + screenX].samplesZ[sample])
 		{
 			m_frameBuffer[y * m_width + screenX].samplesZ[sample] = z;
 			return true;
@@ -647,11 +653,20 @@ void GraphicsAPI::processTriangle(ShaderIO& p1, ShaderIO& p2, ShaderIO& p3)
 	m_pipeline.invokeVertexShader(p2);
 	m_pipeline.invokeVertexShader(p3);
 
+	float w1 = p1.data[0].w;
+	float w2 = p2.data[0].w;
+	float w3 = p3.data[0].w;
+
 	p1.data[0] /= p1.data[0].w;
 	p2.data[0] /= p2.data[0].w;
 	p3.data[0] /= p3.data[0].w;
+	p1.data[0].w = w1;
+	p2.data[0].w = w2;
+	p3.data[0].w = w3;
 
-	ScanLineRasterizer r(m_pipeline);
+
+	//ScanLineRasterizer r(m_pipeline);
+	TiledRasterizer r(m_pipeline);
 	r.setup(&p1, &p2, &p3, m_width, m_height);
 	r.rasterize();
 }
